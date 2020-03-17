@@ -3,6 +3,9 @@
 
 /* Include */
 #include "record.h"
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 /* LKMALLOC FLAGS */
 #define LKM_REG 0x0
@@ -35,7 +38,14 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
 int lkfree(void **ptr, unsigned int flags);
 int lkreport(int fd, unsigned int flags);
 
-/* globals */
-struct LK_RECORD_NODE lk_record_node_head;
+/* other */
+
+#define GUARD_VAL 0x5a
+#define GUARD_SIZE 8
+
+#define RECORD_TYPE_MALLOC 0
+#define RECORD_TYPE_FREE 1
+
+struct lkrecord_node *head = NULL;
 
 #endif
