@@ -1,4 +1,5 @@
 #include "lkmalloc.h"
+#include "record.h"
 
 int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line)
 {

@@ -1,6 +1,4 @@
 #include "record.h"
-#include <stdlib.h>
-#include <errno.h>
 
 void push_node(struct lkrecord_node **head, struct lkrecord_node *node)
 {
@@ -57,6 +55,7 @@ int create_node(struct lkrecord_node **new_node,
         return -ENOMEM;
     (*new_node)->record.record_type = record_type;
     (*new_node)->record.line_num = line_num;
+    (*new_node)->record.ptr_passed = ptr_passed;
     (*new_node)->record.real_ptr = real_ptr;
     (*new_node)->record.addr_returned = addr_returned;
     (*new_node)->record.real_size = real_size;

@@ -2,7 +2,6 @@
 #define LKMALLOC_H
 
 /* Include */
-#include "record.h"
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
