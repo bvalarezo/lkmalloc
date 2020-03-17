@@ -48,7 +48,8 @@ int create_node(struct lkrecord_node **new_node,
                 unsigned long addr_returned,
                 unsigned int real_size,
                 unsigned int requested_size,
-                int flags,
+                int flags_passed,
+                int internal_flags,
                 int retval)
 {
     if (!(*new_node = (struct lkrecord_node *)malloc(sizeof(struct lkrecord_node))))
@@ -60,7 +61,8 @@ int create_node(struct lkrecord_node **new_node,
     (*new_node)->record.addr_returned = addr_returned;
     (*new_node)->record.real_size = real_size;
     (*new_node)->record.requested_size = requested_size;
-    (*new_node)->record.flags = flags;
+    (*new_node)->record.flags_passed = flags_passed;
+    (*new_node)->record.internal_flags = internal_flags;
     (*new_node)->record.retval = retval;
     if (!((*new_node)->record.file_name = (char *)malloc(sizeof(char) * (strlen(file_name) + 1))))
         return -ENOMEM;

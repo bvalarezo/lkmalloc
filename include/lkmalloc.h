@@ -30,11 +30,11 @@
 /* Prototype Marcos*/
 
 #define lkmalloc(size, ptr, flags) __lkmalloc__((size), (ptr), (flags), __FILE__, __func__, __LINE__)
-
+#define lkfree(ptr, flags) __lkfree__((ptr), (flags), __FILE__, __func__, __LINE__);
 /* Prototypes */
 
 int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line);
-int lkfree(void **ptr, unsigned int flags);
+int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line);
 int lkreport(int fd, unsigned int flags);
 
 /* other */
@@ -45,6 +45,7 @@ int lkreport(int fd, unsigned int flags);
 #define RECORD_TYPE_MALLOC 0
 #define RECORD_TYPE_FREE 1
 
-struct lkrecord_node *head = NULL;
+struct lkrecord_node *malloc_head = NULL;
+struct lkrecord_node *free_head = NULL;
 
 #endif

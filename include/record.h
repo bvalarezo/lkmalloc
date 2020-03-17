@@ -18,7 +18,8 @@ struct lkrecord
     unsigned long addr_returned;
     unsigned int real_size;
     unsigned int requested_size;
-    int flags;
+    int flags_passed;
+    int internal_flags;
     int retval;
 };
 
@@ -54,7 +55,8 @@ int create_node(struct lkrecord_node **new_node,
                 unsigned long addr_returned,
                 unsigned int real_size,
                 unsigned int requested_size,
-                int flags,
+                int flags_passed,
+                int internal_flags,
                 int retval);
 
 /* properly dispose(free) node*/
