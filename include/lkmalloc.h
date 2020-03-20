@@ -42,9 +42,6 @@ int lkreport(int fd, unsigned int flags);
 #define GUARD_VAL 0x5a
 #define GUARD_SIZE 8
 
-#define RECORD_TYPE_MALLOC 0
-#define RECORD_TYPE_FREE 1
-
 struct lkrecord_node *malloc_head = NULL;
 struct lkrecord_node *free_head = NULL;
 

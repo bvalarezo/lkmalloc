@@ -39,7 +39,7 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
             memset(ptr[under + size], GUARD_VAL, GUARD_SIZE);
     }
     /* create lkrecord and push it onto the queue */
-    if (create_node(&malloc_node, RECORD_TYPE_MALLOC, file, func, line, ptr, *ptr, ptr[under], real_size, size, flags, flags, retval) < 0)
+    if (create_malloc_node(&malloc_node, file, func, line, *ptr, retval, *ptr, ptr[under], real_size, size) < 0)
         return -ENOMEM;
     push_node(malloc_head, malloc_node);
 
@@ -48,25 +48,24 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
 int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
 {
     int internal_flags = 0;
+    struct lkrecord_node *malloc_pair = NULL, *free_ptr = NULL;
     if (flags & LKF_APPROX)
+        malloc_pair = find_unpaired_malloc_node_approx(&malloc_head, *ptr);
+    else
+        malloc_pair = find_unpaired_malloc_node(&malloc_head, *ptr);
+    if (!malloc_pair) //null
     {
-        internal_flags += LKR_BAD_FREE;
-        //free approx
-        //bad free
-        //get every node in the mallocQ, check if ptr lies within real_ptr and real_ptr+real_size
-        //if this failed, orphaned free
-        //if found, get the real ptr
-        //check if its in the freeQ, if found DOUBLEFREE
+        if (!(free_ptr = find_free_node(&free_head, *ptr)))
+            internal_flags |= LKR_ORPHAN_FREE;
+        else
+            internal_flags |= LKR_DOUBLE_FREE;
     }
     else
     {
-        //free exact
-        //find node with addr_returned == ptr in mallocQ
-        //if this failed, orphaned free
-        //try to find this in the freeQ
-        //if found, double free
+        if (flags & LKF_APPROX && malloc_pair->record.malloc_info.real_ptr < *ptr) //check bad free
+            internal_flags |= LKR_BAD_FREE;
+        free(malloc_pair->record.malloc_info.real_ptr);
     }
-
     //create record
 
     //execute protections

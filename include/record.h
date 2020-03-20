@@ -6,6 +6,24 @@
 #include <errno.h>
 
 /* lkrecord */
+
+struct malloc_extension
+{
+    unsigned long real_ptr;
+    unsigned long addr_returned;
+    unsigned int real_size;
+    unsigned int requested_size;
+    struct lkrecord_node *free_pair;
+};
+
+struct free_extension
+{
+    unsigned long addr_freed;
+    int flags_passed;
+    int internal_flags;
+    struct lkrecord_node *malloc_pair;
+};
+
 struct lkrecord
 {
     unsigned int record_type : 1;
@@ -14,13 +32,11 @@ struct lkrecord
     int line_num;
     char *time;
     unsigned long ptr_passed;
-    unsigned long real_ptr;
-    unsigned long addr_returned;
-    unsigned int real_size;
-    unsigned int requested_size;
-    int flags_passed;
-    int internal_flags;
     int retval;
+    union {
+        struct malloc_extension malloc_info;
+        struct free_extension free_info;
+    };
 };
 
 /* lkrecord_node */
@@ -41,25 +57,36 @@ void push_node(struct lkrecord_node **head, struct lkrecord_node *node);
 /* pop node at the end of the list */
 struct lkrecord_node *pop_node(struct lkrecord_node **head);
 
-/* return node with the matching addr_returned */
-struct lkrecord_node *find_node(struct lkrecord_node **head, unsigned long addr_returned);
+/* Attempts to find a malloc node with a NULL free pair*/
+struct lkrecord_node *find_unpaired_malloc_node(struct lkrecord_node **head, unsigned long addr_returned);
 
-/* create a new node */
-int create_node(struct lkrecord_node **new_node,
-                int record_type,
-                char *file_name,
-                char *function_name,
-                int line_num,
-                unsigned long ptr_passed,
-                unsigned long real_ptr,
-                unsigned long addr_returned,
-                unsigned int real_size,
-                unsigned int requested_size,
-                int flags_passed,
-                int internal_flags,
-                int retval);
+/* create a new malloc node */
+int create_malloc_node(struct lkrecord_node **new_node,
+                       char *file_name,
+                       char *function_name,
+                       int line_num,
+                       unsigned long ptr_passed,
+                       int retval,
+                       unsigned long real_ptr,
+                       unsigned long addr_returned,
+                       unsigned int real_size,
+                       unsigned int requested_size);
+
+/* create a new free node */
+int create_free_node(struct lkrecord_node **new_node,
+                     char *file_name,
+                     char *function_name,
+                     int line_num,
+                     unsigned long ptr_passed,
+                     int retval,
+                     int flags_passed,
+                     int internal_flags,
+                     unsigned long malloc_pair);
 
 /* properly dispose(free) node*/
 void destroy_node(struct lkrecord_node *node);
+
+#define RECORD_TYPE_MALLOC 0
+#define RECORD_TYPE_FREE 1
 
 #endif
