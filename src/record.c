@@ -110,7 +110,7 @@ int create_free_node(struct lkrecord_node **new_node,
                      int retval,
                      int flags_passed,
                      int internal_flags,
-                     unsigned long malloc_pair)
+                     struct lkrecord_node *malloc_pair)
 {
     if (!(*new_node = (struct lkrecord_node *)malloc(sizeof(struct lkrecord_node))))
         return -ENOMEM;

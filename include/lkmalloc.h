@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 /* LKMALLOC FLAGS */
 #define LKM_REG 0x0
@@ -39,7 +40,13 @@ int lkreport(int fd, unsigned int flags);
 
 /* other */
 
-#define GUARD_VAL 0x5a
+/* Colors */
+#define KNRM "\033[0m"
+#define KRED "\033[1;31m"
+#define KYLW "\033[1;33m"
+
+#define OVER_GUARD_VAL 0x5a
+#define UNDER_GUARD_VAL 0x6b
 #define GUARD_SIZE 8
 
 struct lkrecord_node *malloc_head = NULL;

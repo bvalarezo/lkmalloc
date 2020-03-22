@@ -47,7 +47,8 @@ struct lkrecord_node
     struct lkrecord_node *prev;
 };
 
-/* We will be implementing a Queue to hold our nodes*/
+/* We will be implementing a RB-Tree to hold our malloc nodes*/
+/* We will be implementing a TreeMap to hold our free nodes*/
 
 /* Prototypes */
 
@@ -81,7 +82,7 @@ int create_free_node(struct lkrecord_node **new_node,
                      int retval,
                      int flags_passed,
                      int internal_flags,
-                     unsigned long malloc_pair);
+                     struct lkrecord_node *malloc_pair);
 
 /* properly dispose(free) node*/
 void destroy_node(struct lkrecord_node *node);
