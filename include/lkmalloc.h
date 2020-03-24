@@ -49,7 +49,7 @@ int lkreport(int fd, unsigned int flags);
 #define UNDER_GUARD_VAL 0x6b
 #define GUARD_SIZE 8
 
-struct lkrecord_node *malloc_head = NULL;
-struct lkrecord_node *free_head = NULL;
+struct rb_node *m_tree = NULL;
+struct rb_node *f_tree = NULL;
 
 #endif
