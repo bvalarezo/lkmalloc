@@ -29,6 +29,7 @@
 #define LKR_BAD_FREE 0x4
 #define LKR_ORPHAN_FREE 0x8
 #define LKR_DOUBLE_FREE 0x10
+#define LKR_APPROX 0x20
 
 /* Prototype Marcos*/
 

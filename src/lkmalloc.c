@@ -8,6 +8,8 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
     unsigned int under = 0, over = 0, real_size = size;
     struct lkrecord *malloc_record;
     void *ptr_passed = *ptr;
+    /* set atexit */
+    //TODO
     /* check flags */
     if (flags == LKM_REG)
     {
@@ -57,10 +59,15 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
     }
     /* create lkrecord and push it onto the tree */
     if (create_malloc_record(&malloc_record, file, func, line, ptr_passed, retval, *ptr, ptr[under], real_size, size) < 0)
-        return -ENOMEM; //exit instead?
+    {
+        fprintf(stderr, KRED "\'lkmalloc\' fatal error: failed to create an internal record. Exiting program... \n" KNRM);
+        exit(-ENOMEM);
+    }
     if (push_record_to_tree(&m_tree, malloc_record, malloc_record->data.malloc_info.addr_returned) < 0)
-        return -ENOMEM; //exit instead?
-
+    {
+        fprintf(stderr, KRED "\'lkmalloc\' fatal error: failed to insert record to internal data structure. Exiting program... \n" KNRM);
+        exit(-ENOMEM);
+    }
     return retval;
 }
 int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
@@ -70,6 +77,8 @@ int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
     int internal_flags = 0;
     struct rb_node *m_tree_node, *f_tree_node;
     struct lkrecord *malloc_pair = NULL, *recent_free_record, *free_record = NULL;
+    /* set atexit */
+    //TODO
     /* check if free is valid */
     m_tree_node = (flags & LKF_APPROX) ? find_node_approx(&m_tree, *ptr) : find_node_exact(&m_tree, *ptr);
     if (m_tree_node) /* current ptr is allocated */
@@ -78,9 +87,9 @@ int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
 
         /* pop malloc_pair record */
         malloc_pair = pop_record_from_node(m_tree_node);
-        if (flags & LKF_APPROX && malloc_pair->data.malloc_info.addr_returned != *ptr)
+        if ((flags & LKF_APPROX) && (malloc_pair->data.malloc_info.addr_returned != *ptr))
         {
-            internal_flags |= LKR_BAD_FREE;
+            internal_flags |= LKR_APPROX;
             warn++;
         }
         /* perform free */
@@ -110,10 +119,15 @@ int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
     }
     /* create lkrecord and push it onto the tree */
     if (create_free_node(&free_record, file, func, line, *ptr, retval, flags, internal_flags, malloc_pair) < 0)
-        return -ENOMEM; //TODO: we should exit program instead
+    {
+        fprintf(stderr, KRED "\'lkfree\' fatal error: failed to create an internal record. Exiting program... \n" KNRM);
+        exit(-ENOMEM);
+    }
     if (push_record_to_tree(&f_tree, free_record, free_record->data.generic_info.ptr_passed) < 0)
-        return -ENOMEM;
-
+    {
+        fprintf(stderr, KRED "\'lkfree\' fatal error: failed to insert record to internal data structure. Exiting program... \n" KNRM);
+        exit(-ENOMEM);
+    }
     /* execute protections */
     if (warn && (flags & LKF_WARN))
         fprintf(stderr, KYLW "Warning: pointer %p is not the exact allocation address assigned for this block\n" KNRM, *ptr); //warning
@@ -121,8 +135,8 @@ int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
         fprintf(stderr, KYLW "Warning: pointer %p is not a known allocation address\n" KNRM, *ptr); //warning
     if ((warn || unknown) && (flags & LKF_ERROR))
     {
-        fprintf(stderr, KRED "Fatal Error. Exiting program...\n" KNRM, *ptr);
-        //TODO : Exit
+        fprintf(stderr, KRED "Fatal Error. Exiting program...\n" KNRM);
+        exit(-LKF_ERROR);
     }
     return retval;
 }
@@ -152,12 +166,12 @@ int lkreport(int fd, unsigned int flags)
     if (flags == LKR_NONE)
         goto close;
 
-    // /* illegal pairing (redundant request) */
-    // if (flags & (LKR_MATCH | LKR_BAD_FREE))
-    // {
-    //     retval = -EINVAL;
-    //     goto close;
-    // }
+    /* illegal pairing (redundant request) */
+    if (flags & (LKR_APPROX | LKR_BAD_FREE))
+    {
+        retval = -EINVAL;
+        goto close;
+    }
 
     /* produce reports */
 
@@ -234,10 +248,36 @@ int lkreport(int fd, unsigned int flags)
                             record->data.free_info.flags_passed);
                     retval += 2;
                 }
-                /* its a BAD_FREE */
-                else if ((record->data.free_info.internal_flags & LKR_BAD_FREE) && (flags & LKR_BAD_FREE))
+                /* LKR_APPROX works if the ptr_passed was (approximated) and freed  */
+                else if ((record->data.free_info.internal_flags & LKR_APPROX) && (flags & LKR_APPROX))
                 {
+                    /* print the malloc pair */
+                    dprintf(fd, MALLOC_FMT,
+                            malloc_pair->data.generic_info.record_type,
+                            malloc_pair->data.generic_info.file_name,
+                            malloc_pair->data.generic_info.function_name,
+                            malloc_pair->data.generic_info.line_num,
+                            malloc_pair->data.generic_info.time,
+                            malloc_pair->data.generic_info.ptr_passed,
+                            malloc_pair->data.generic_info.retval,
+                            malloc_pair->data.malloc_info.requested_size,
+                            malloc_pair->data.malloc_info.addr_returned);
                     /* print the free record */
+                    dprintf(fd, FREE_FMT,
+                            record->data.generic_info.record_type,
+                            record->data.generic_info.file_name,
+                            record->data.generic_info.function_name,
+                            record->data.generic_info.line_num,
+                            record->data.generic_info.time,
+                            record->data.generic_info.ptr_passed,
+                            record->data.generic_info.retval,
+                            record->data.free_info.flags_passed);
+                    retval += 2;
+                }
+                /* BAD_FREE works if ptr_passed was (approximated) and freed */
+                else if ((record->data.free_info.internal_flags & LKR_APPROX) && (flags & LKR_BAD_FREE))
+                {
+                    /* print only the free record */
                     dprintf(fd, FREE_FMT,
                             record->data.generic_info.record_type,
                             record->data.generic_info.file_name,
@@ -249,6 +289,7 @@ int lkreport(int fd, unsigned int flags)
                             record->data.free_info.flags_passed);
                     retval++;
                 }
+
                 /* delete the malloc pair record */
                 destroy_record(malloc_pair);
             }
@@ -272,7 +313,8 @@ int lkreport(int fd, unsigned int flags)
                 }
                 /* double free */
                 else if ((record->data.free_info.internal_flags & LKR_DOUBLE_FREE) && (flags & LKR_DOUBLE_FREE))
-                { /* print the free record */
+                {
+                    /* print the free record */
                     dprintf(fd, FREE_FMT,
                             record->data.generic_info.record_type,
                             record->data.generic_info.file_name,
