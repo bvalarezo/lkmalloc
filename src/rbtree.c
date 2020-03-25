@@ -367,3 +367,17 @@ struct rb_node *find_node_approx(struct rb_node **root, unsigned long addr)
     /* key is less than root's key */
     return find_node_exact((*root)->left, addr);
 }
+
+void destroy_tree(struct rb_node **root)
+{
+    struct rb_node *node = NULL;
+    struct lkrecord *record = NULL;
+    if (!(*root))
+        return;
+    while (node = *root)
+    {
+        while (record = pop_record_from_node(node))
+            destroy_record(record);
+        remove_node(root, node);
+    }
+}

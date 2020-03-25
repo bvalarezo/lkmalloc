@@ -27,4 +27,5 @@ void remove_node(struct rb_node **root, struct rb_node *z);
 static void fix_double_black(struct rb_node **root, struct rb_node *x);
 struct rb_node *find_node_exact(struct rb_node **root, unsigned long key);
 struct rb_node *find_node_approx(struct rb_node **root, unsigned long key);
+void destroy_tree(struct rb_node **root);
 #endif

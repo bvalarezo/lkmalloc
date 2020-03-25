@@ -6,6 +6,8 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 /* LKMALLOC FLAGS */
 #define LKM_REG 0x0
@@ -38,7 +40,10 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
 int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line);
 int lkreport(int fd, unsigned int flags);
 
-/* other */
+/* lk_report */
+#define CSV_HEADER "record_type,filename,fxname,line_num,timestamp,ptr_passed,retval,size_or_flags,alloc_addr_returned\n"
+#define MALLOC_FMT "%d,%s,%s,%d,%s,%p,%d,%d,%p\n"
+#define FREE_FMT "%d,%s,%s,%d,%s,%p,%d,%d,\n"
 
 /* Colors */
 #define KNRM "\033[0m"
@@ -49,6 +54,7 @@ int lkreport(int fd, unsigned int flags);
 #define UNDER_GUARD_VAL 0x6b
 #define GUARD_SIZE 8
 
+/* tree roots */
 struct rb_node *m_tree = NULL;
 struct rb_node *f_tree = NULL;
 

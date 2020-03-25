@@ -120,12 +120,185 @@ int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
     if (unknown && (flags & LKF_UNKNOWN))
         fprintf(stderr, KYLW "Warning: pointer %p is not a known allocation address\n" KNRM, *ptr); //warning
     if ((warn || unknown) && (flags & LKF_ERROR))
-        fprintf(stderr, KRED "Fatal Error. Exiting program...\n" KNRM, *ptr); //exit program
-    //exit
+    {
+        fprintf(stderr, KRED "Fatal Error. Exiting program...\n" KNRM, *ptr);
+        //TODO : Exit
+    }
     return retval;
 }
 
 int lkreport(int fd, unsigned int flags)
 {
-    return 0;
+    int retval = 0;
+    struct rb_node *node = NULL;
+    struct lkrecord *record = NULL, *malloc_pair;
+
+    /* check if fd is open */
+    if (fcntl(fd, F_GETFL) == -1)
+    {
+        retval = -EBADF;
+        goto clean_up;
+    }
+    /* check if we have permission to write to fd */
+    if (!(fcntl(fd, F_GETFL) & (O_RDWR | O_WRONLY)))
+    {
+        retval = -EACCES;
+        goto close;
+    }
+
+    /* check flags */
+
+    /* do not produce a report */
+    if (flags == LKR_NONE)
+        goto close;
+
+    // /* illegal pairing (redundant request) */
+    // if (flags & (LKR_MATCH | LKR_BAD_FREE))
+    // {
+    //     retval = -EINVAL;
+    //     goto close;
+    // }
+
+    /* produce reports */
+
+    /* csv header */
+    dprintf(fd, CSV_HEADER);
+
+    /* Malloc Tree */
+    while (node = m_tree)
+    {
+        /* pop the record from node */
+        while (record = pop_record_from_node(node))
+        {
+            /* check the flags */
+            if (flags & LKR_SERIOUS)
+            {
+                /* print the record */
+                dprintf(fd, MALLOC_FMT,
+                        record->data.generic_info.record_type,
+                        record->data.generic_info.file_name,
+                        record->data.generic_info.function_name,
+                        record->data.generic_info.line_num,
+                        record->data.generic_info.time,
+                        record->data.generic_info.ptr_passed,
+                        record->data.generic_info.retval,
+                        record->data.malloc_info.requested_size,
+                        record->data.malloc_info.addr_returned);
+                retval++;
+            }
+            /* free on behalf of lkmalloc */
+            free(record->data.malloc_info.real_ptr);
+            /* delete the malloc record */
+            destroy_record(record);
+        }
+        /* remove the node from the tree */
+        remove_node(&m_tree, node);
+    }
+    node = record = NULL;
+    /* Free Tree*/
+    while (node = f_tree)
+    {
+        /* pop the record from node */
+        while (record = pop_record_from_node(node))
+        {
+            /* check the flags */
+
+            /* if this was a valid free */
+            if (malloc_pair = record->data.free_info.malloc_pair)
+            {
+                /* valid free */
+
+                /* LKR_MATCH only works for matching ptr_passed & addr_returned */
+                if ((record->data.free_info.internal_flags == 0) && (flags & LKR_MATCH))
+                {
+                    /* print the malloc pair */
+                    dprintf(fd, MALLOC_FMT,
+                            malloc_pair->data.generic_info.record_type,
+                            malloc_pair->data.generic_info.file_name,
+                            malloc_pair->data.generic_info.function_name,
+                            malloc_pair->data.generic_info.line_num,
+                            malloc_pair->data.generic_info.time,
+                            malloc_pair->data.generic_info.ptr_passed,
+                            malloc_pair->data.generic_info.retval,
+                            malloc_pair->data.malloc_info.requested_size,
+                            malloc_pair->data.malloc_info.addr_returned);
+                    /* print the free record */
+                    dprintf(fd, FREE_FMT,
+                            record->data.generic_info.record_type,
+                            record->data.generic_info.file_name,
+                            record->data.generic_info.function_name,
+                            record->data.generic_info.line_num,
+                            record->data.generic_info.time,
+                            record->data.generic_info.ptr_passed,
+                            record->data.generic_info.retval,
+                            record->data.free_info.flags_passed);
+                    retval += 2;
+                }
+                /* its a BAD_FREE */
+                else if ((record->data.free_info.internal_flags & LKR_BAD_FREE) && (flags & LKR_BAD_FREE))
+                {
+                    /* print the free record */
+                    dprintf(fd, FREE_FMT,
+                            record->data.generic_info.record_type,
+                            record->data.generic_info.file_name,
+                            record->data.generic_info.function_name,
+                            record->data.generic_info.line_num,
+                            record->data.generic_info.time,
+                            record->data.generic_info.ptr_passed,
+                            record->data.generic_info.retval,
+                            record->data.free_info.flags_passed);
+                    retval++;
+                }
+                /* delete the malloc pair record */
+                destroy_record(malloc_pair);
+            }
+            else
+            {
+                /* invalid free */
+
+                /* orphan free */
+                if ((record->data.free_info.internal_flags & LKR_ORPHAN_FREE) && (flags & LKR_ORPHAN_FREE))
+                { /* print the free record */
+                    dprintf(fd, FREE_FMT,
+                            record->data.generic_info.record_type,
+                            record->data.generic_info.file_name,
+                            record->data.generic_info.function_name,
+                            record->data.generic_info.line_num,
+                            record->data.generic_info.time,
+                            record->data.generic_info.ptr_passed,
+                            record->data.generic_info.retval,
+                            record->data.free_info.flags_passed);
+                    retval++;
+                }
+                /* double free */
+                else if ((record->data.free_info.internal_flags & LKR_DOUBLE_FREE) && (flags & LKR_DOUBLE_FREE))
+                { /* print the free record */
+                    dprintf(fd, FREE_FMT,
+                            record->data.generic_info.record_type,
+                            record->data.generic_info.file_name,
+                            record->data.generic_info.function_name,
+                            record->data.generic_info.line_num,
+                            record->data.generic_info.time,
+                            record->data.generic_info.ptr_passed,
+                            record->data.generic_info.retval,
+                            record->data.free_info.flags_passed);
+                    retval++;
+                }
+            }
+            /* delete the free record */
+            destroy_record(record);
+        }
+        /* remove the node from the tree */
+        remove_node(&m_tree, node);
+    }
+    /* finished reporting */
+close:
+    /* close the fd*/
+    if (close(fd) < 0)
+        retval = -errno;
+clean_up:
+    /* clean up our trees (if needed)*/
+    destroy_tree(&m_tree);
+    destroy_tree(&f_tree);
+    return retval;
 }
