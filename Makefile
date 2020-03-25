@@ -1,38 +1,22 @@
 CC := gcc
-SRCD := src
-BLDD := build
-INCD := include
+DRIVERD := driver
+LIBD := lkmalloc
 TESTD := tests
 
-ALL_SRCF := $(shell find $(SRCD) -type f -name *.c)
-ALL_OBJF := $(patsubst $(SRCD)/%,$(BLDD)/%,$(ALL_SRCF:.c=.o))
-ALL_TESTS := $(shell find $(TESTD) -type f -name *.sh)
-FUNC_FILES := $(filter-out build/main.o, $(ALL_OBJF))
-INC := -I $(INCD)
-# EXEC := filesec
+LIB_SRCD := $(LIBD)/src
+LIB_BLDD := $(LIBD)/build
+LIB_INCD := $(LIBD)/include
 
-CFLAGS := -g -O2 -Wall -Werror
-LDFLAGS := -lssl -lcrypto
+DRIVER_SRCD := $(DRIVERD)/src
+DRIVER_BIND := $(DRIVERD)/bin
+
+ALL_LIB_SRCF := $(shell find $(LIB_SRCD) -type -f -name *.c)
+ALL_LIB_OBJF := $(shell find $(LIB_BLDD) -type -f -name *.o)
+LIB_INC = -I $(LIB_INCD)
+
+CFLAGS := -g -Wall -Werror
 STD := -std=gnu11
 
 CFLAGS += $(STD)
 
-.PHONY: clean all test
-
-all: setup $(EXEC)
-
-setup:
-	mkdir -p build
-
-$(EXEC): $(ALL_OBJF)
-	$(CC) $^ -o $@ $(LDFLAGS)
-
-$(BLDD)/%.o: $(SRCD)/%.c
-	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
-
-clean:
-	$(RM) -r $(BLDD) $(EXEC)
-
-tests: $(EXEC) $(ALL_TESTS)
-	for i in $(ALL_TESTS); do \
-		/bin/bash $$i; done
+setup: 
