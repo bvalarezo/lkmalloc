@@ -5,5 +5,5 @@
 int main()
 {
     printf("driver2\n");
-    return 1;
+    return 0;
 }

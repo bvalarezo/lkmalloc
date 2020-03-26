@@ -34,9 +34,6 @@ void right_rotate(struct rb_node **root, struct rb_node *x)
     x->parent = y;
 }
 
-/* this will create and insert a new key node to the tree */
-/* returns a pointer to the newly created node */
-/* returns NULL on failure */
 struct rb_node *insert(struct rb_node **root, void *new_key)
 {
     struct rb_node *x, *y;
@@ -162,7 +159,6 @@ void insert_fixup(struct rb_node **root, struct rb_node *z)
     (*root)->color = BLACK;
 }
 
-/* Removes node z from the tree*/
 void remove_node(struct rb_node **root, struct rb_node *z)
 {
     struct rb_node *replacement = NULL, *sibling = NULL, *parent = z->parent;
@@ -258,7 +254,7 @@ void fix_double_black(struct rb_node **root, struct rb_node *x)
     if ((*root) == x)
         return;
 
-    sibling = (x == parent->left) ? parent->right : parent->left;
+    sibling = (x == (parent->left)) ? (parent->right) : (parent->left);
     if (!sibling)
         fix_double_black(root, parent);
     else
@@ -325,12 +321,6 @@ void fix_double_black(struct rb_node **root, struct rb_node *x)
     }
 }
 
-/* Finds a node in the tree according to the key
- * this will return a pointer to that node
- * returns NULL if the key was not found
- * 
- * NOTE: this works for both the malloc and free tree
- */
 struct rb_node *find_node_exact(struct rb_node **root, void *key)
 {
     /* start at the root */
@@ -346,12 +336,6 @@ struct rb_node *find_node_exact(struct rb_node **root, void *key)
     return find_node_exact(&((*root)->left), key);
 }
 
-/* Finds a node in the tree according to the key
- * this will return a pointer to that node
- * returns NULL if the key was not found
- * 
- * NOTE: this only works for the malloc tree, it will segfault for the free tree
- */
 struct rb_node *find_node_approx(struct rb_node **root, void *addr)
 {
     /* start at the root */

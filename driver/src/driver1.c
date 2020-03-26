@@ -4,6 +4,11 @@
 
 int main()
 {
-    printf("driver1\n");
+    void *buf = NULL;
+    int ret;
+    ret = lkmalloc(10, &buf, LKM_REG);
+    printf("driver1, ret=%d\n", ret);
+    lkfree(&buf, LKF_REG);
+    lkreport(STDOUT_FILENO, LKR_SERIOUS | LKR_MATCH);
     return 0;
 }

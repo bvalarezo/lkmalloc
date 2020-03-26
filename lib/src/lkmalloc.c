@@ -6,7 +6,7 @@
 struct rb_node *m_tree = NULL;
 struct rb_node *f_tree = NULL;
 
-int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line)
+int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, const char *file, const char *func, int line)
 {
     int retval = EXIT_SUCCESS;
     unsigned int under = 0, over = 0, real_size = size;
@@ -74,7 +74,7 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, 
     }
     return retval;
 }
-int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
+int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *func, int line)
 {
     int retval = EXIT_SUCCESS;
     int warn = 0, unknown = 0; //protections
@@ -336,7 +336,7 @@ int lkreport(int fd, unsigned int flags)
             destroy_record(record);
         }
         /* remove the node from the tree */
-        remove_node(&m_tree, node);
+        remove_node(&f_tree, node);
     }
     /* finished reporting */
 close:

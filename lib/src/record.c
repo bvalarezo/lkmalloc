@@ -1,10 +1,5 @@
 #include "record.h"
 
-/* Push a new record to the tree
- *
- * returns EXIT_SUCCESS if insert was successful
- * -EXIT_FAILURE on failed insert
- */
 int push_record_to_tree(struct rb_node **root, struct lkrecord *record, void *key)
 {
     int retval = EXIT_SUCCESS;
@@ -37,8 +32,6 @@ int push_record_to_tree(struct rb_node **root, struct lkrecord *record, void *ke
     return retval;
 }
 
-/* this will pop(remove) the most recently added record from the rb_node
- * returns the most recent lkrecord, NULL if there is no lkrecord in this rb_node */
 struct lkrecord *pop_record_from_node(struct rb_node *node)
 {
     struct lkrecord *record = NULL, *prev = NULL;
@@ -61,8 +54,6 @@ struct lkrecord *pop_record_from_node(struct rb_node *node)
     return record;
 }
 
-/* this will get the most recently added record from the rb_node
- * returns the most recent lkrecord, NULL if there is no lkrecord in this rb_node */
 struct lkrecord *get_record_from_node(struct rb_node *node)
 {
     struct lkrecord *record = NULL;
@@ -77,16 +68,16 @@ struct lkrecord *get_record_from_node(struct rb_node *node)
     return record;
 }
 
-int create_malloc_node(struct lkrecord **new_record,
-                       char *file_name,
-                       char *function_name,
-                       int line_num,
-                       void *ptr_passed,
-                       int retval,
-                       void *real_ptr,
-                       void *addr_returned,
-                       unsigned int real_size,
-                       unsigned int requested_size)
+int create_malloc_record(struct lkrecord **new_record,
+                         const char *file_name,
+                         const char *function_name,
+                         int line_num,
+                         void *ptr_passed,
+                         int retval,
+                         void *real_ptr,
+                         void *addr_returned,
+                         unsigned int real_size,
+                         unsigned int requested_size)
 {
     /* allocate memory for lkrecord */
     if (!(*new_record = (struct lkrecord *)malloc(sizeof(struct lkrecord))))
@@ -94,16 +85,10 @@ int create_malloc_node(struct lkrecord **new_record,
     (*new_record)->next = NULL;
     /* generic information */
     (*new_record)->data.generic_info.record_type = RECORD_TYPE_MALLOC;
-    if (!((*new_record)->data.generic_info.file_name = (char *)malloc(sizeof(char) * (strlen(file_name) + 1))))
-        return -ENOMEM;
-    memcpy((*new_record)->data.generic_info.file_name, file_name, strlen(file_name) + 1);
-    if (!((*new_record)->data.generic_info.function_name = (char *)malloc(sizeof(char) * (strlen(function_name) + 1))))
-        return -ENOMEM;
-    memcpy((*new_record)->data.generic_info.function_name, function_name, strlen(function_name) + 1);
+    (*new_record)->data.generic_info.file_name = file_name;
+    (*new_record)->data.generic_info.function_name = function_name;
     (*new_record)->data.generic_info.line_num = line_num;
-    if (!((*new_record)->data.generic_info.time = (char *)malloc(sizeof(char) * (strlen(__TIME__) + 1))))
-        return -ENOMEM;
-    memcpy((*new_record)->data.generic_info.time, __TIME__, strlen(__TIME__) + 1);
+    (*new_record)->data.generic_info.time = __TIME__;
     (*new_record)->data.generic_info.ptr_passed = ptr_passed;
     (*new_record)->data.generic_info.retval = retval;
     /* malloc extension*/
@@ -115,45 +100,40 @@ int create_malloc_node(struct lkrecord **new_record,
     return EXIT_SUCCESS;
 }
 
-int create_free_node(struct lkrecord **new_record,
-                     char *file_name,
-                     char *function_name,
-                     int line_num,
-                     void *ptr_passed,
-                     int retval,
-                     int flags_passed,
-                     int internal_flags,
-                     struct lkrecord *malloc_pair)
+int create_free_record(struct lkrecord **new_record,
+                       const char *file_name,
+                       const char *function_name,
+                       int line_num,
+                       void *ptr_passed,
+                       int retval,
+                       int flags_passed,
+                       int internal_flags,
+                       struct lkrecord *malloc_pair)
 {
     /* allocate memory for lkrecord */
     if (!(*new_record = (struct lkrecord *)malloc(sizeof(struct lkrecord))))
         return -ENOMEM;
     (*new_record)->next = NULL;
     /* generic information */
-    (*new_record)->data.generic_info.record_type = RECORD_TYPE_MALLOC;
-    if (!((*new_record)->data.generic_info.file_name = (char *)malloc(sizeof(char) * (strlen(file_name) + 1))))
-        return -ENOMEM;
-    memcpy((*new_record)->data.generic_info.file_name, file_name, strlen(file_name) + 1);
-    if (!((*new_record)->data.generic_info.function_name = (char *)malloc(sizeof(char) * (strlen(function_name) + 1))))
-        return -ENOMEM;
-    memcpy((*new_record)->data.generic_info.function_name, function_name, strlen(function_name) + 1);
+    (*new_record)->data.generic_info.record_type = RECORD_TYPE_FREE;
+    (*new_record)->data.generic_info.file_name = file_name;
+    (*new_record)->data.generic_info.function_name = function_name;
     (*new_record)->data.generic_info.line_num = line_num;
-    if (!((*new_record)->data.generic_info.time = (char *)malloc(sizeof(char) * (strlen(__TIME__) + 1))))
-        return -ENOMEM;
-    memcpy((*new_record)->data.generic_info.time, __TIME__, strlen(__TIME__) + 1);
+    (*new_record)->data.generic_info.time = __TIME__;
     (*new_record)->data.generic_info.ptr_passed = ptr_passed;
     (*new_record)->data.generic_info.retval = retval;
     /* free extension*/
     (*new_record)->data.free_info.flags_passed = flags_passed;
     (*new_record)->data.free_info.internal_flags = internal_flags;
+    (*new_record)->data.free_info.malloc_pair = malloc_pair;
 
     return EXIT_SUCCESS;
 }
 
 void destroy_record(struct lkrecord *record)
 {
-    free(record->data.generic_info.time);
-    free(record->data.generic_info.function_name);
-    free(record->data.generic_info.file_name);
+    // free(record->data.generic_info.time);
+    // free(record->data.generic_info.function_name);
+    // free(record->data.generic_info.file_name);
     free(record);
 }

@@ -23,7 +23,7 @@ ALL_DRIVER_OBJF := $(patsubst $(DRIVER_SRCD)/%,$(DRIVER_BLDD)/%,$(ALL_DRIVER_SRC
 ALL_DRIVER_BIN := $(patsubst $(DRIVER_BLDD)/%,$(DRIVER_BIND)/%,$(ALL_DRIVER_OBJF:.o=))
 DRIVER_INC = -I $(DRIVER_INCD)
 
-CFLAGS := -Wall -Werror -MD
+CFLAGS := -g -Wall -Werror -MD
 LDFLAGS := -l$(LIB_NAME)
 STD := -std=gnu11
 
@@ -57,7 +57,7 @@ $(DRIVER_BIND):
 	mkdir -p $(DRIVER_BIND)
 
 $(DRIVER_BIND)/%: $(DRIVER_BLDD)/%.o
-	$(CC) -L$(LIBD) $(LDFLAGS) $< -o $@
+	$(CC) $< -o $@ -L$(LIBD) $(LDFLAGS) 
 
 $(DRIVER_BLDD)/%.o: $(DRIVER_SRCD)/%.c
 	$(CC) $(CFLAGS) $(LIB_INC) $(DRIVER_INC) -c -o $@ $<
