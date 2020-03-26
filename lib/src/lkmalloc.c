@@ -1,6 +1,4 @@
 #include "lkmalloc.h"
-#include "record.h"
-#include "rbtree.h"
 
 int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line)
 {
@@ -118,7 +116,7 @@ int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line)
         }
     }
     /* create lkrecord and push it onto the tree */
-    if (create_free_node(&free_record, file, func, line, *ptr, retval, flags, internal_flags, malloc_pair) < 0)
+    if (create_free_record(&free_record, file, func, line, *ptr, retval, flags, internal_flags, malloc_pair) < 0)
     {
         fprintf(stderr, KRED "\'lkfree\' fatal error: failed to create an internal record. Exiting program... \n" KNRM);
         exit(-ENOMEM);
@@ -179,10 +177,10 @@ int lkreport(int fd, unsigned int flags)
     dprintf(fd, CSV_HEADER);
 
     /* Malloc Tree */
-    while (node = m_tree)
+    while ((node = m_tree))
     {
         /* pop the record from node */
-        while (record = pop_record_from_node(node))
+        while ((record = pop_record_from_node(node)))
         {
             /* check the flags */
             if (flags & LKR_SERIOUS)
@@ -208,17 +206,18 @@ int lkreport(int fd, unsigned int flags)
         /* remove the node from the tree */
         remove_node(&m_tree, node);
     }
-    node = record = NULL;
+    node = NULL;
+    record = NULL;
     /* Free Tree*/
-    while (node = f_tree)
+    while ((node = f_tree))
     {
         /* pop the record from node */
-        while (record = pop_record_from_node(node))
+        while ((record = pop_record_from_node(node)))
         {
             /* check the flags */
 
             /* if this was a valid free */
-            if (malloc_pair = record->data.free_info.malloc_pair)
+            if ((malloc_pair = record->data.free_info.malloc_pair))
             {
                 /* valid free */
 

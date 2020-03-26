@@ -1,7 +1,6 @@
 #include "rbtree.h"
-#include "record.h"
 
-static void left_rotate(struct rb_node **root, struct rb_node *x)
+void left_rotate(struct rb_node **root, struct rb_node *x)
 {
     struct rb_node *y = x->right;
     x->right = y->left;
@@ -18,7 +17,7 @@ static void left_rotate(struct rb_node **root, struct rb_node *x)
     x->parent = y;
 }
 
-static void right_rotate(struct rb_node **root, struct rb_node *x)
+void right_rotate(struct rb_node **root, struct rb_node *x)
 {
     struct rb_node *y = x->left;
     x->left = y->right;
@@ -38,7 +37,7 @@ static void right_rotate(struct rb_node **root, struct rb_node *x)
 /* this will create and insert a new key node to the tree */
 /* returns a pointer to the newly created node */
 /* returns NULL on failure */
-struct rb_node *insert(struct rb_node **root, unsigned long new_key)
+struct rb_node *insert(struct rb_node **root, void *new_key)
 {
     struct rb_node *x, *y;
     /* allocate memory for the new rb_node */
@@ -76,7 +75,7 @@ struct rb_node *insert(struct rb_node **root, unsigned long new_key)
     return z;
 }
 
-static void insert_fixup(struct rb_node **root, struct rb_node *z)
+void insert_fixup(struct rb_node **root, struct rb_node *z)
 {
     struct rb_node *parent = NULL, *grand_parent = NULL, *uncle = NULL;
     unsigned int color;
@@ -213,7 +212,7 @@ void remove_node(struct rb_node **root, struct rb_node *z)
         return;
     }
     /* z has 1 child*/
-    else if (z->left && !(z->right) || z->right && !(z->left))
+    else if ((z->left && !(z->right)) || (z->right && !(z->left)))
     {
         if ((*root) == z) //if z is root
         {
@@ -242,7 +241,7 @@ void remove_node(struct rb_node **root, struct rb_node *z)
     else
     {
         /* swap key and record pointer of z with replacement */
-        unsigned long z_key = z->key;
+        void *z_key = z->key;
         struct lkrecord *z_record_ptr = z->record_ptr;
         z->key = replacement->key;
         z->record_ptr = replacement->record_ptr;
@@ -253,7 +252,7 @@ void remove_node(struct rb_node **root, struct rb_node *z)
     }
 }
 
-static void fix_double_black(struct rb_node **root, struct rb_node *x)
+void fix_double_black(struct rb_node **root, struct rb_node *x)
 {
     struct rb_node *sibling = NULL, *parent = x->parent;
     if ((*root) == x)
@@ -332,7 +331,7 @@ static void fix_double_black(struct rb_node **root, struct rb_node *x)
  * 
  * NOTE: this works for both the malloc and free tree
  */
-struct rb_node *find_node_exact(struct rb_node **root, unsigned long key)
+struct rb_node *find_node_exact(struct rb_node **root, void *key)
 {
     /* start at the root */
     if (!(*root))
@@ -342,9 +341,9 @@ struct rb_node *find_node_exact(struct rb_node **root, unsigned long key)
         return *root;
     /* key is greater than root's key */
     if ((*root)->key < key)
-        return find_node_exact((*root)->right, key);
+        return find_node_exact(&((*root)->right), key);
     /* key is less than root's key */
-    return find_node_exact((*root)->left, key);
+    return find_node_exact(&((*root)->left), key);
 }
 
 /* Finds a node in the tree according to the key
@@ -353,7 +352,7 @@ struct rb_node *find_node_exact(struct rb_node **root, unsigned long key)
  * 
  * NOTE: this only works for the malloc tree, it will segfault for the free tree
  */
-struct rb_node *find_node_approx(struct rb_node **root, unsigned long addr)
+struct rb_node *find_node_approx(struct rb_node **root, void *addr)
 {
     /* start at the root */
     if (!(*root))
@@ -363,9 +362,9 @@ struct rb_node *find_node_approx(struct rb_node **root, unsigned long addr)
         return *root;
     /* key is greater than root's key */
     if ((*root)->key < addr)
-        return find_node_exact((*root)->right, addr);
+        return find_node_exact(&((*root)->right), addr);
     /* key is less than root's key */
-    return find_node_exact((*root)->left, addr);
+    return find_node_exact(&((*root)->left), addr);
 }
 
 void destroy_tree(struct rb_node **root)
@@ -374,9 +373,9 @@ void destroy_tree(struct rb_node **root)
     struct lkrecord *record = NULL;
     if (!(*root))
         return;
-    while (node = *root)
+    while ((node = *root))
     {
-        while (record = pop_record_from_node(node))
+        while ((record = pop_record_from_node(node)))
             destroy_record(record);
         remove_node(root, node);
     }

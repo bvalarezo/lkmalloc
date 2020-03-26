@@ -1,12 +1,11 @@
 #include "record.h"
-#include "rbtree.h"
 
 /* Push a new record to the tree
  *
  * returns EXIT_SUCCESS if insert was successful
  * -EXIT_FAILURE on failed insert
  */
-int push_record_to_tree(struct rb_node **root, struct lkrecord *record, unsigned long key)
+int push_record_to_tree(struct rb_node **root, struct lkrecord *record, void *key)
 {
     int retval = EXIT_SUCCESS;
     struct rb_node *tree_node;
@@ -82,10 +81,10 @@ int create_malloc_node(struct lkrecord **new_record,
                        char *file_name,
                        char *function_name,
                        int line_num,
-                       unsigned long ptr_passed,
+                       void *ptr_passed,
                        int retval,
-                       unsigned long real_ptr,
-                       unsigned long addr_returned,
+                       void *real_ptr,
+                       void *addr_returned,
                        unsigned int real_size,
                        unsigned int requested_size)
 {
@@ -120,7 +119,7 @@ int create_free_node(struct lkrecord **new_record,
                      char *file_name,
                      char *function_name,
                      int line_num,
-                     unsigned long ptr_passed,
+                     void *ptr_passed,
                      int retval,
                      int flags_passed,
                      int internal_flags,

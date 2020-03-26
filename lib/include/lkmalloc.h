@@ -1,14 +1,6 @@
 #ifndef LKMALLOC_H
 #define LKMALLOC_H
 
-/* Include */
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-
 /* LKMALLOC FLAGS */
 #define LKM_REG 0x0
 #define LKM_INIT 0x1
@@ -31,16 +23,6 @@
 #define LKR_DOUBLE_FREE 0x10
 #define LKR_APPROX 0x20
 
-/* Prototype Marcos*/
-
-#define lkmalloc(size, ptr, flags) __lkmalloc__((size), (ptr), (flags), __FILE__, __func__, __LINE__)
-#define lkfree(ptr, flags) __lkfree__((ptr), (flags), __FILE__, __func__, __LINE__);
-/* Prototypes */
-
-int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line);
-int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line);
-int lkreport(int fd, unsigned int flags);
-
 /* lk_report */
 #define CSV_HEADER "record_type,filename,fxname,line_num,timestamp,ptr_passed,retval,size_or_flags,alloc_addr_returned\n"
 #define MALLOC_FMT "%d,%s,%s,%d,%s,%p,%d,%d,%p\n"
@@ -54,6 +36,26 @@ int lkreport(int fd, unsigned int flags);
 #define OVER_GUARD_VAL 0x5a
 #define UNDER_GUARD_VAL 0x6b
 #define GUARD_SIZE 8
+
+/* Include */
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include "record.h"
+#include "rbtree.h"
+
+/* Prototype Marcos*/
+
+#define lkmalloc(size, ptr, flags) __lkmalloc__((size), (ptr), (flags), __FILE__, __func__, __LINE__)
+#define lkfree(ptr, flags) __lkfree__((ptr), (flags), __FILE__, __func__, __LINE__);
+/* Prototypes */
+
+int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line);
+int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line);
+int lkreport(int fd, unsigned int flags);
 
 /* tree roots */
 struct rb_node *m_tree = NULL;
