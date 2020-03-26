@@ -44,8 +44,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "record.h"
-#include "rbtree.h"
 
 /* Prototype Marcos*/
 
@@ -56,9 +54,5 @@
 int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line);
 int __lkfree__(void **ptr, unsigned int flags, char *file, char *func, int line);
 int lkreport(int fd, unsigned int flags);
-
-/* tree roots */
-struct rb_node *m_tree = NULL;
-struct rb_node *f_tree = NULL;
 
 #endif

@@ -21,9 +21,9 @@ LIB := lib$(LIB_NAME).a
 ALL_DRIVER_SRCF := $(shell find $(DRIVER_SRCD) -type f -name *.c)
 ALL_DRIVER_OBJF := $(patsubst $(DRIVER_SRCD)/%,$(DRIVER_BLDD)/%,$(ALL_DRIVER_SRCF:.c=.o))
 ALL_DRIVER_BIN := $(patsubst $(DRIVER_BLDD)/%,$(DRIVER_BIND)/%,$(ALL_DRIVER_OBJF:.o=))
-DRIVER_INC = -I $(DRIVER_INCD) 
+DRIVER_INC = -I $(DRIVER_INCD)
 
-CFLAGS := -Wall -Werror
+CFLAGS := -Wall -Werror -MD
 LDFLAGS := -l$(LIB_NAME)
 STD := -std=gnu11
 
@@ -57,7 +57,7 @@ $(DRIVER_BIND):
 	mkdir -p $(DRIVER_BIND)
 
 $(DRIVER_BIND)/%: $(DRIVER_BLDD)/%.o
-	$(CC) $< -o $@ -L$(LIBD) $(LDFLAGS)
+	$(CC) -L$(LIBD) $(LDFLAGS) $< -o $@
 
 $(DRIVER_BLDD)/%.o: $(DRIVER_SRCD)/%.c
 	$(CC) $(CFLAGS) $(LIB_INC) $(DRIVER_INC) -c -o $@ $<
@@ -70,4 +70,5 @@ lib_clean:
 driver_clean:
 	$(RM) -r $(DRIVER_BLDD) $(DRIVER_BIND)
 
-.PRECIOUS: $(ALL_DRIVER_OBJF) $(ALL_LIB_OBJF)
+.PRECIOUS: $(LIB_BLDD)/*.d $(DRIVER_BLDD)/*.d
+-include $(LIB_BLDD)/*.d $(DRIVER_BLDD)/*.d

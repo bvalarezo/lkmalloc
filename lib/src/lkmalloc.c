@@ -1,4 +1,10 @@
 #include "lkmalloc.h"
+#include "record.h"
+#include "rbtree.h"
+
+/* tree roots */
+struct rb_node *m_tree = NULL;
+struct rb_node *f_tree = NULL;
 
 int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, char *file, char *func, int line)
 {
