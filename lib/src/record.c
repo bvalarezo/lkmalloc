@@ -79,6 +79,11 @@ int create_malloc_record(struct lkrecord **new_record,
                          unsigned int real_size,
                          unsigned int requested_size)
 {
+    /* time variables */
+    struct timespec tv;
+    clockid_t clk_id = CLOCK_REALTIME;
+    if (clock_gettime(clk_id, &tv) < 0)
+        return -errno;
     /* allocate memory for lkrecord */
     if (!(*new_record = (struct lkrecord *)malloc(sizeof(struct lkrecord))))
         return -ENOMEM;
@@ -88,7 +93,7 @@ int create_malloc_record(struct lkrecord **new_record,
     (*new_record)->data.generic_info.file_name = file_name;
     (*new_record)->data.generic_info.function_name = function_name;
     (*new_record)->data.generic_info.line_num = line_num;
-    (*new_record)->data.generic_info.time = __TIME__;
+    (*new_record)->data.generic_info.time = (unsigned long)(1000000L * tv.tv_sec) + (tv.tv_nsec / 1000);
     (*new_record)->data.generic_info.ptr_passed = ptr_passed;
     (*new_record)->data.generic_info.retval = retval;
     /* malloc extension*/
@@ -106,10 +111,15 @@ int create_free_record(struct lkrecord **new_record,
                        int line_num,
                        void *ptr_passed,
                        int retval,
-                       int flags_passed,
-                       int internal_flags,
+                       unsigned int flags_passed,
+                       unsigned int internal_flags,
                        struct lkrecord *malloc_pair)
 {
+    /* time variables */
+    struct timespec tv;
+    clockid_t clk_id = CLOCK_REALTIME;
+    if (clock_gettime(clk_id, &tv) < 0)
+        return -errno;
     /* allocate memory for lkrecord */
     if (!(*new_record = (struct lkrecord *)malloc(sizeof(struct lkrecord))))
         return -ENOMEM;
@@ -119,7 +129,7 @@ int create_free_record(struct lkrecord **new_record,
     (*new_record)->data.generic_info.file_name = file_name;
     (*new_record)->data.generic_info.function_name = function_name;
     (*new_record)->data.generic_info.line_num = line_num;
-    (*new_record)->data.generic_info.time = __TIME__;
+    (*new_record)->data.generic_info.time = (unsigned long)(1000000L * tv.tv_sec) + (tv.tv_nsec / 1000);
     (*new_record)->data.generic_info.ptr_passed = ptr_passed;
     (*new_record)->data.generic_info.retval = retval;
     /* free extension*/
@@ -132,8 +142,5 @@ int create_free_record(struct lkrecord **new_record,
 
 void destroy_record(struct lkrecord *record)
 {
-    // free(record->data.generic_info.time);
-    // free(record->data.generic_info.function_name);
-    // free(record->data.generic_info.file_name);
     free(record);
 }

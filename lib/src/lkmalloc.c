@@ -78,7 +78,7 @@ int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *fun
 {
     int retval = EXIT_SUCCESS;
     int warn = 0, unknown = 0; //protections
-    int internal_flags = 0;
+    unsigned int internal_flags = 0;
     struct rb_node *m_tree_node, *f_tree_node;
     struct lkrecord *malloc_pair = NULL, *recent_free_record, *free_record = NULL;
     /* set atexit */
@@ -171,8 +171,9 @@ int lkreport(int fd, unsigned int flags)
         goto close;
 
     /* illegal pairing (redundant request) */
-    if (flags & (LKR_APPROX | LKR_BAD_FREE))
+    if ((flags & LKR_APPROX) && (flags & LKR_BAD_FREE))
     {
+        fprintf(stderr, KRED "\'lkreport\' error: invalid flag combination \'%d\'.\n" KNRM, flags);
         retval = -EINVAL;
         goto close;
     }

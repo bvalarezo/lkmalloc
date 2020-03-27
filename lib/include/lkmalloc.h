@@ -29,8 +29,8 @@
 /* lk_report */
 
 #define CSV_HEADER "record_type,filename,fxname,line_num,timestamp,ptr_passed,retval,size_or_flags,alloc_addr_returned\n"
-#define MALLOC_FMT "%d,%s,%s,%d,%s,%p,%d,%d,%p\n"
-#define FREE_FMT "%d,%s,%s,%d,%s,%p,%d,%d,\n"
+#define MALLOC_FMT "%d,%s,%s,%d,%lu,%p,%d,%d,%p\n"
+#define FREE_FMT "%d,%s,%s,%d,%lu,%p,%d,%d,\n"
 
 /* Colors */
 

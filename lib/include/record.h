@@ -9,7 +9,7 @@ struct generic
     const char *file_name;
     const char *function_name;
     int line_num;
-    char *time;
+    unsigned long time;
     void *ptr_passed;
     int retval;
 };
@@ -24,8 +24,8 @@ struct malloc_extension
 
 struct free_extension
 {
-    int flags_passed;
-    int internal_flags;
+    unsigned int flags_passed;
+    unsigned int internal_flags;
     struct lkrecord *malloc_pair;
 };
 
@@ -48,6 +48,7 @@ struct lkrecord
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "rbtree.h"
 
 /* We will be implementing a RB-Tree to hold our malloc nodes*/
@@ -95,8 +96,8 @@ int create_free_record(struct lkrecord **new_record,
                        int line_num,
                        void *ptr_passed,
                        int retval,
-                       int flags_passed,
-                       int internal_flags,
+                       unsigned int flags_passed,
+                       unsigned int internal_flags,
                        struct lkrecord *malloc_pair);
 
 /* properly dispose (lkfree) node*/

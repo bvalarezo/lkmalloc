@@ -1,14 +1,12 @@
 #include "driver.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 int main()
 {
+    printf("driver1\n");
+    set_lkreport(STDOUT_FILENO, LKR_SERIOUS | LKR_ORPHAN_FREE);
     void *buf = NULL;
-    int ret;
-    ret = lkmalloc(10, &buf, LKM_REG);
-    printf("driver1, ret=%d\n", ret);
-    lkfree(&buf, LKF_REG);
-    lkreport(STDOUT_FILENO, LKR_SERIOUS | LKR_MATCH);
+    lkmalloc(10, &buf, LKM_REG);
+    buf++;
+    lkfree(&buf, LKF_ERROR);
     return 0;
 }
