@@ -2,7 +2,7 @@
 
 int main()
 {
-    set_lkreport(STDERR_FILENO, LKR_BAD_FREE | LKR_ORPHAN_FREE | LKR_DOUBLE_FREE);
+    set_lkreport(STDOUT_FILENO, LKR_BAD_FREE | LKR_ORPHAN_FREE | LKR_DOUBLE_FREE);
     printf("driver3\n");
     void *buf = NULL;
     lkmalloc(10, &buf, LKF_REG);

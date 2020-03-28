@@ -2,7 +2,7 @@
 
 int main()
 {
-    set_lkreport(STDERR_FILENO, LKR_SERIOUS);
+    set_lkreport(STDOUT_FILENO, LKR_SERIOUS);
     void *buf = NULL;
     int i, ret, r;
     for (i = 0; i < 1000; i++)
