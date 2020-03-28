@@ -6,7 +6,7 @@ int push_record_to_tree(struct rb_node **root, struct lkrecord *record, void *ke
     struct rb_node *tree_node;
     struct lkrecord *ptr;
     /* find if a rb_node already exists for this record */
-    tree_node = find_node_exact(root, key);
+    tree_node = find_node_exact(*root, key);
     if (tree_node)
     {
         /* append the record */

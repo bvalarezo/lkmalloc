@@ -10,8 +10,8 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, const char *
 {
     int retval = EXIT_SUCCESS;
     unsigned int under = 0, over = 0, real_size = size;
-    struct lkrecord *malloc_record;
-    void *ptr_passed = *ptr;
+    struct lkrecord *malloc_record = NULL;
+    void *ptr_passed = *ptr, *addr_returned = NULL, *real_ptr = NULL;
     /* set atexit */
     //TODO
     /* check flags */
@@ -20,15 +20,18 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, const char *
         /* do not add protections */
 
         /* do requested malloc */
-        if (!((*ptr) = malloc(real_size)))
+        if (!(real_ptr = malloc(real_size)))
         {
             /* malloc failed */
             retval = -ENOMEM;
             real_size = 0;
         }
         else
+        {
             /* malloc succeeded */
             retval = EXIT_SUCCESS;
+            addr_returned = real_ptr;
+        }
     }
     else
     {
@@ -42,7 +45,7 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, const char *
         real_size += (under + over);
 
         /* do requested malloc */
-        if (!((*ptr) = malloc(real_size)))
+        if (!(real_ptr = malloc(real_size)))
         {
             /* malloc failed */
             retval = -ENOMEM;
@@ -52,17 +55,18 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, const char *
         {
             /* malloc succeeded */
             retval = EXIT_SUCCESS;
+            addr_returned = (real_ptr + under);
             /* perform protections */
             if (flags & LKM_INIT) //INIT 0
-                memset(*ptr, 0, real_size);
+                memset(real_ptr, 0, real_size);
             if (flags & LKM_UNDER) //UNDER GUARD
-                memset(*ptr, UNDER_GUARD_VAL, GUARD_SIZE);
+                memset(real_ptr, UNDER_GUARD_VAL, GUARD_SIZE);
             if (flags & LKM_OVER) //OVER GUARD
-                memset(ptr[under + size], OVER_GUARD_VAL, GUARD_SIZE);
+                memset(addr_returned + size, OVER_GUARD_VAL, GUARD_SIZE);
         }
     }
     /* create lkrecord and push it onto the tree */
-    if (create_malloc_record(&malloc_record, file, func, line, ptr_passed, retval, *ptr, ptr[under], real_size, size) < 0)
+    if (create_malloc_record(&malloc_record, file, func, line, ptr_passed, retval, real_ptr, addr_returned, real_size, size) < 0)
     {
         fprintf(stderr, KRED "\'lkmalloc\' fatal error: failed to create an internal record. Exiting program... \n" KNRM);
         exit(-ENOMEM);
@@ -72,6 +76,7 @@ int __lkmalloc__(unsigned int size, void **ptr, unsigned int flags, const char *
         fprintf(stderr, KRED "\'lkmalloc\' fatal error: failed to insert record to internal data structure. Exiting program... \n" KNRM);
         exit(-ENOMEM);
     }
+    *ptr = addr_returned;
     return retval;
 }
 int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *func, int line)
@@ -79,12 +84,12 @@ int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *fun
     int retval = EXIT_SUCCESS;
     int warn = 0, unknown = 0; //protections
     unsigned int internal_flags = 0;
-    struct rb_node *m_tree_node, *f_tree_node;
-    struct lkrecord *malloc_pair = NULL, *recent_free_record, *free_record = NULL;
+    struct rb_node *m_tree_node = NULL, *f_tree_node = NULL;
+    struct lkrecord *malloc_pair = NULL, *recent_free_record = NULL, *free_record = NULL;
     /* set atexit */
     //TODO
     /* check if free is valid */
-    m_tree_node = (flags & LKF_APPROX) ? find_node_approx(&m_tree, *ptr) : find_node_exact(&m_tree, *ptr);
+    m_tree_node = (flags & LKF_APPROX) ? find_node_approx(m_tree, *ptr) : find_node_exact(m_tree, *ptr);
     if (m_tree_node) /* current ptr is allocated */
     {
         /* valid free */
@@ -108,7 +113,7 @@ int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *fun
         unknown++;
 
         /* check if it is an orphan or double free*/
-        f_tree_node = find_node_exact(&f_tree, *ptr);
+        f_tree_node = find_node_exact(f_tree, *ptr);
         if (!f_tree_node)
             internal_flags |= LKR_ORPHAN_FREE;
         else
@@ -205,8 +210,9 @@ int lkreport(int fd, unsigned int flags)
                         record->data.malloc_info.addr_returned);
                 retval++;
             }
-            /* free on behalf of lkmalloc */
+            /* free user's memory on behalf of lkmalloc */
             free(record->data.malloc_info.real_ptr);
+
             /* delete the malloc record */
             destroy_record(record);
         }

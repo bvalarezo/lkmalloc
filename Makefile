@@ -20,7 +20,7 @@ LIB := lib$(LIB_NAME).a
 
 ALL_DRIVER_SRCF := $(shell find $(DRIVER_SRCD) -type f -name *.c)
 ALL_DRIVER_OBJF := $(patsubst $(DRIVER_SRCD)/%,$(DRIVER_BLDD)/%,$(ALL_DRIVER_SRCF:.c=.o))
-ALL_DRIVER_BIN := $(patsubst $(DRIVER_BLDD)/%,$(DRIVER_BIND)/%,$(ALL_DRIVER_OBJF:.o=))
+ALL_DRIVER_BIN := $(patsubst $(DRIVER_BLDD)/%,$(DRIVER_BIND)/%,$(ALL_DRIVER_OBJF:.o=.out))
 DRIVER_INC = -I $(DRIVER_INCD)
 
 CFLAGS := -g -Wall -Werror -MD
@@ -56,7 +56,7 @@ $(DRIVER_BLDD):
 $(DRIVER_BIND):
 	mkdir -p $(DRIVER_BIND)
 
-$(DRIVER_BIND)/%: $(DRIVER_BLDD)/%.o
+$(DRIVER_BIND)/%.out: $(DRIVER_BLDD)/%.o
 	$(CC) $< -o $@ -L$(LIBD) $(LDFLAGS) 
 
 $(DRIVER_BLDD)/%.o: $(DRIVER_SRCD)/%.c

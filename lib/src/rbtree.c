@@ -321,34 +321,34 @@ void fix_double_black(struct rb_node **root, struct rb_node *x)
     }
 }
 
-struct rb_node *find_node_exact(struct rb_node **root, void *key)
+struct rb_node *find_node_exact(struct rb_node *node, void *addr)
 {
     /* start at the root */
-    if (!(*root))
+    if (!node)
         return NULL;
     /* check if the root is the desired node*/
-    if ((*root)->key == key)
-        return *root;
+    if (node->key == addr)
+        return node;
     /* key is greater than root's key */
-    if ((*root)->key < key)
-        return find_node_exact(&((*root)->right), key);
+    if (node->key < addr)
+        return find_node_exact(node->right, addr);
     /* key is less than root's key */
-    return find_node_exact(&((*root)->left), key);
+    return find_node_exact(node->left, addr);
 }
 
-struct rb_node *find_node_approx(struct rb_node **root, void *addr)
+struct rb_node *find_node_approx(struct rb_node *node, void *addr)
 {
     /* start at the root */
-    if (!(*root))
+    if (!node)
         return NULL;
     /* check if the root is the desired node (check within the malloc block) */
-    if ((*root)->record_ptr->data.malloc_info.real_ptr <= addr && addr <= ((*root)->record_ptr->data.malloc_info.real_ptr) + ((*root)->record_ptr->data.malloc_info.real_size))
-        return *root;
+    if ((node->record_ptr->data.malloc_info.real_ptr <= addr) && (addr <= (node->record_ptr->data.malloc_info.real_ptr) + (node->record_ptr->data.malloc_info.real_size)))
+        return node;
     /* key is greater than root's key */
-    if ((*root)->key < addr)
-        return find_node_exact(&((*root)->right), addr);
+    if (node->key < addr)
+        return find_node_approx(node->right, addr);
     /* key is less than root's key */
-    return find_node_exact(&((*root)->left), addr);
+    return find_node_approx(node->left, addr);
 }
 
 void destroy_tree(struct rb_node **root)

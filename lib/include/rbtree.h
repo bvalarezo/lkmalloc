@@ -42,7 +42,7 @@ void fix_double_black(struct rb_node **root, struct rb_node *x);
  * 
  * NOTE: this works for both the lkmalloc and lkfree tree
  */
-struct rb_node *find_node_exact(struct rb_node **root, void *key);
+struct rb_node *find_node_exact(struct rb_node *root, void *key);
 
 /* Finds a node in the tree approximating to the key
  *
@@ -51,7 +51,7 @@ struct rb_node *find_node_exact(struct rb_node **root, void *key);
  * 
  * NOTE: this only works for the lkmalloc tree, SIGSEGV is sent for the lkfree tree
  */
-struct rb_node *find_node_approx(struct rb_node **root, void *key);
+struct rb_node *find_node_approx(struct rb_node *root, void *key);
 
 void destroy_tree(struct rb_node **root);
 
