@@ -21,6 +21,7 @@ To compile only the static library, run...
 ```bash
 make lib
 ```
+This will create an archive '.a' file containing all of the library functions.  
 
 To compile the static library and driver programs, run...
 ```bash
@@ -31,8 +32,10 @@ To run the test scripts, run...
 ```bash
 make test
 ```
+To install this library, please include paths to the `lkmalloc.h` header file and the `liblkmalloc.a` archive. Be sure to compile with the with the LDFLAGS `-L<path to archive> -llkmalloc`.
+
 ## Structure
-The basic file tree looks like the one below. All files associated with  **lkmalloc** are in the `lib` folder. 
+The basic file tree looks like the one below. All files associated with  **lkmalloc** are in the `lib` folder. All files in the `driver` folder are meant to showcase usage of the library. 
 
 	├── driver
 	│   ├── bin
@@ -96,7 +99,7 @@ Add an additional 8 bytes of memory at the end of the allocation and writes the 
 __LKM_UNDER__
 Add an additional 8 bytes of memory at the beginning of the allocation and writes the special pattern *0x6b*.
 
-__LKM_REG__ may not be combined with any other flag. If combined, the __LKM_REG__ is completely negated  and __lkmalloc()__ will invoke the other flags combined.
+__LKM_REG__ may not be combined with any other flag. If combined, __LKM_REG__ is ignored and __lkmalloc()__ will invoke the other flags combined.
 
 The __lkfree()__ function frees the memory space pointed to by **ptr*, which must have been written by a previous call to __lkmalloc()__.  It does so by making a call to __free()__, only if the **ptr* passed in is a valid allocated address in memory. The __lkfree()__ function will also log a record of the call and internally store relevant information; see __lkrecord__ for details. Additional behavior and protections are invoked based on the *flags* passed in. This will attempt to handle bad frees's, orphaned frees, double frees, and misaligned addresses of an allocated space.
 
@@ -144,7 +147,7 @@ Print records that attempt to free memory addresses were already freed by __lkfr
 **LKR_APPROX**  
 Print records whose memory address have a corresponding call to __lkmalloc()__ and __lkfree()__ and the address freed by __lkfree()__ was an approximated free (when __LKF_APPROX__ was passed in).
 
-__LKR_NONE__ may not be combined with any other flag. If combined, the __LKR_NONE__ flag is completely negated  and __lkreport()__ will invoke the other flags combined. **LKR_BAD_FREE**  and **LKR_APPROX** may not be combined with each  other as it is a redundant request to print approxmiated frees and bad frees. If combined, __lkreport()__ will return an error code and not print a report.   
+__LKR_NONE__ may not be combined with any other flag. If combined, the __LKR_NONE__ flag is ignored and __lkreport()__ will invoke the other flags combined. **LKR_BAD_FREE**  and **LKR_APPROX** may not be combined with each other as it is a redundant request to print approxmiated frees and bad frees. If combined, __lkreport()__ will return an error code and not print a report.   
 
 #### LKRECORD
 An lkrecord will record generic information such as..
@@ -220,7 +223,7 @@ void set_lkreport(int  fd, unsigned  int  flags)
 	atexit(lkreport_atexit);
 }
 ```
-Finally,   the wrapper can be called in the beginning of the program...
+Finally, the wrapper can be called in the beginning of the program...
 ```C
 int main(){
 	//fd = open file
@@ -278,7 +281,7 @@ struct  lkrecord
 	struct  lkrecord  *next;
 };
 ```
-The type of data structure used is a combination of a red-black tree with nodes pointing to a linked list. This is otherwise desribed as a TreeMap(see rbtree.h). 
+The type of data structure used is a combination of a red-black tree with nodes pointing to a linked list. This is otherwise described as a TreeMap(see rbtree.h). 
 
 `N` is the tree node that points to a linked list of records `R`.
 

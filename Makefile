@@ -25,7 +25,7 @@ DRIVER_INC = -I $(DRIVER_INCD)
 
 ALL_TESTS := $(shell find $(TESTD) -type f -name *.sh)
 
-CFLAGS := -g -Wall -Werror -MD
+CFLAGS := -Wall -Werror -MD
 LDFLAGS := -l$(LIB_NAME)
 STD := -std=gnu11
 

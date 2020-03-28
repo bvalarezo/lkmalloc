@@ -1,5 +1,13 @@
 #include "rbtree.h"
-
+/* 
+ *  All functions in this file were inspired by these sources. 
+ *
+ *  https://en.wikipedia.org/wiki/Red%E2%80%93black_tree
+ *  https://www.geeksforgeeks.org/red-black-tree-set-3-delete-2/?ref=lbp
+ *  https://www.geeksforgeeks.org/c-program-red-black-tree-insertion/
+ *  https://github.com/bvalarezo/red-black-tree/blob/master/rbtree.h (This is my personal Github)
+ * 
+ */
 void left_rotate(struct rb_node **root, struct rb_node *x)
 {
     struct rb_node *y = x->right;

@@ -101,6 +101,9 @@ int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *fun
         unknown++;
         retval = -EINVAL;
     }
+    if ((flags & LKF_WARN) && !(flags & LKF_APPROX))
+        fprintf(stderr, KYLW "\'lkfree\' warning: You must supply the LKF_APPROX flag with LKF_WARN to invoke LKF_WARN. Ignoring LKF_WARN... \n" KNRM);
+
     if (ptr_passed)
     {
         /* check if free is valid */
@@ -157,11 +160,11 @@ int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *fun
     if (warn && (flags & LKF_WARN))
         fprintf(stderr, KYLW "Warning: address %p is not the exact allocation address assigned for this block\n" KNRM, ptr_passed); //warning
     if (unknown && (flags & LKF_UNKNOWN))
-        fprintf(stderr, KYLW "Warning: address %p is not an unknown allocated block\n" KNRM, ptr_passed); //warning
+        fprintf(stderr, KYLW "Warning: address %p is an unknown allocated block\n" KNRM, ptr_passed); //warning
     if ((warn || unknown) && (flags & LKF_ERROR))
     {
-        fprintf(stderr, KRED "Fatal Error. Exiting program...\n" KNRM);
-        exit(-LKF_ERROR);
+        fprintf(stderr, KRED "Fatal error caught by LKF_ERROR. Exiting program...\n" KNRM);
+        exit(-EINVAL);
     }
     return retval;
 }
@@ -175,12 +178,14 @@ int lkreport(int fd, unsigned int flags)
     /* check if fd is open */
     if (fcntl(fd, F_GETFL) == -1)
     {
+        fprintf(stderr, KRED "\'lkreport\' error: file descriptor \'%d\' in a bad state (not open).\n" KNRM, fd);
         retval = -EBADF;
         goto clean_up;
     }
     /* check if we have permission to write to fd */
     if (!(fcntl(fd, F_GETFL) & (O_RDWR | O_WRONLY)))
     {
+        fprintf(stderr, KRED "\'lkreport\' error: unable to write to file descriptor \'%d\'.\n" KNRM, fd);
         retval = -EACCES;
         goto close;
     }
@@ -194,7 +199,7 @@ int lkreport(int fd, unsigned int flags)
     /* illegal pairing (redundant request) */
     if ((flags & LKR_APPROX) && (flags & LKR_BAD_FREE))
     {
-        fprintf(stderr, KRED "\'lkreport\' error: invalid flag combination \'%d\'.\n" KNRM, flags);
+        fprintf(stderr, KRED "\'lkreport\' error: invalid flag combination LKR_APPROX & LKR_BAD_FREE.\n" KNRM);
         retval = -EINVAL;
         goto close;
     }
