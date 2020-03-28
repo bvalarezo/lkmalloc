@@ -133,19 +133,19 @@ Do not print a report of the records tracked.
 Print records that are considered memory leaks(e.g __lkmalloc()__ calls that were not freed by the caller).
 
 **LKR_MATCH**  
-Print records whose memory address have a corresponding call to __lkmalloc()__ and __lkfree()__.
+Print records whose memory address have a corresponding call to __lkmalloc()__ and __lkfree()__ and the address freed matches the address returned by __lkmalloc()__.
 
 **LKR_BAD_FREE**  
-Print records that attemped to free memory addresses that did not point to their original allocation from __lkmalloc()__(e.g. memory addresses pointing in other locations of an allocated block).
+Print records that attempt to free memory addresses that did not point to their original allocation from __lkmalloc()__(e.g. memory addresses pointing in other locations of an allocated block).
  
 **LKR_ORPHAN_FREE**  
-Print records that attempted to free memory addresses were never, in the history of the program, allocated by __lkmalloc()__.
+Print records that attempt to free memory addresses that were never, in the history of the program, allocated by __lkmalloc()__.
 
 **LKR_DOUBLE_FREE**  
 Print records that attempt to free memory addresses were already freed by __lkfree()__.
 
 **LKR_APPROX**  
-Print records whose memory address have a corresponding call to __lkmalloc()__ and __lkfree()__ and the address freed by __lkfree()__ was an approximated free (when __LKF_APPROX__ was passed in).
+Print records whose memory address have a corresponding call to __lkmalloc()__ and __lkfree()__ and the address freed was pointed to some allocated address in the allocated block (as per __LKF_APPROX__).
 
 >__NOTE:__ __LKR_NONE__ may not be combined with any other flag. If combined, the __LKR_NONE__ flag is ignored and __lkreport()__ will invoke the other flags combined.
 

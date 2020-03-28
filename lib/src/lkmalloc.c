@@ -125,6 +125,7 @@ int __lkfree__(void **ptr, unsigned int flags, const char *file, const char *fun
                 /* check if approximation happened, else it was exact */
                 if (malloc_pair->data.malloc_info.addr_returned != ptr_passed)
                 {
+                    internal_flags |= LKR_BAD_FREE;
                     internal_flags |= LKR_APPROX;
                     warn++;
                 }
@@ -315,31 +316,39 @@ int lkreport(int fd, unsigned int flags)
                             record->data.free_info.flags_passed);
                     retval += 2;
                 }
-                /* LKR_APPROX works if the ptr_passed was (approximated) freed  */
-                else if ((record->data.free_info.internal_flags & LKR_APPROX) && (flags & LKR_APPROX))
+                else
                 {
-                    /* print the malloc pair */
-                    dprintf(fd, MALLOC_FMT,
-                            malloc_pair->data.generic_info.record_type,
-                            malloc_pair->data.generic_info.file_name,
-                            malloc_pair->data.generic_info.function_name,
-                            malloc_pair->data.generic_info.line_num,
-                            malloc_pair->data.generic_info.time,
-                            malloc_pair->data.generic_info.ptr_passed,
-                            malloc_pair->data.generic_info.retval,
-                            malloc_pair->data.malloc_info.requested_size,
-                            malloc_pair->data.malloc_info.addr_returned);
-                    /* print the free record */
-                    dprintf(fd, FREE_FMT,
-                            record->data.generic_info.record_type,
-                            record->data.generic_info.file_name,
-                            record->data.generic_info.function_name,
-                            record->data.generic_info.line_num,
-                            record->data.generic_info.time,
-                            record->data.generic_info.ptr_passed,
-                            record->data.generic_info.retval,
-                            record->data.free_info.flags_passed);
-                    retval += 2;
+                    /* LKR_APPROX works if the ptr_passed was (approximated) freed  */
+                    if ((record->data.free_info.internal_flags & LKR_APPROX) && (flags & LKR_APPROX))
+                    {
+                        /* print the malloc pair */
+                        dprintf(fd, MALLOC_FMT,
+                                malloc_pair->data.generic_info.record_type,
+                                malloc_pair->data.generic_info.file_name,
+                                malloc_pair->data.generic_info.function_name,
+                                malloc_pair->data.generic_info.line_num,
+                                malloc_pair->data.generic_info.time,
+                                malloc_pair->data.generic_info.ptr_passed,
+                                malloc_pair->data.generic_info.retval,
+                                malloc_pair->data.malloc_info.requested_size,
+                                malloc_pair->data.malloc_info.addr_returned);
+                        retval++;
+                    }
+                    /* LKR_BAD_FREE if there was an attempt to free an address in the middle of an allocation */
+                    if ((record->data.free_info.internal_flags & LKR_BAD_FREE) && (flags & (LKR_BAD_FREE | LKR_APPROX)))
+                    {
+                        /* print the free record */
+                        dprintf(fd, FREE_FMT,
+                                record->data.generic_info.record_type,
+                                record->data.generic_info.file_name,
+                                record->data.generic_info.function_name,
+                                record->data.generic_info.line_num,
+                                record->data.generic_info.time,
+                                record->data.generic_info.ptr_passed,
+                                record->data.generic_info.retval,
+                                record->data.free_info.flags_passed);
+                        retval++;
+                    }
                 }
                 /* delete the malloc pair record */
                 destroy_record(malloc_pair);
@@ -399,7 +408,7 @@ int lkreport(int fd, unsigned int flags)
         /* remove the node from the tree */
         remove_node(&f_tree, node);
     }
-    /* finished reporting */
+/* finished reporting */
 close:
     /* close the fd*/
     if (close(fd) < 0)
