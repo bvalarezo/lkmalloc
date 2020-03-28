@@ -8,7 +8,7 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "./driver/bin/driver1.out",
+            "target": "./driver/bin/driver3.out",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "parseText"
         }

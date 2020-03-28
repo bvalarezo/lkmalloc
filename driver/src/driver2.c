@@ -2,7 +2,6 @@
 
 int main()
 {
-    printf("driver2\n");
     set_lkreport(STDERR_FILENO, LKR_SERIOUS);
     void *buf = NULL;
     int i, ret, r;

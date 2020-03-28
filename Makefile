@@ -23,13 +23,15 @@ ALL_DRIVER_OBJF := $(patsubst $(DRIVER_SRCD)/%,$(DRIVER_BLDD)/%,$(ALL_DRIVER_SRC
 ALL_DRIVER_BIN := $(patsubst $(DRIVER_BLDD)/%,$(DRIVER_BIND)/%,$(ALL_DRIVER_OBJF:.o=.out))
 DRIVER_INC = -I $(DRIVER_INCD)
 
+ALL_TESTS := $(shell find $(TESTD) -type f -name *.sh)
+
 CFLAGS := -g -Wall -Werror -MD
 LDFLAGS := -l$(LIB_NAME)
 STD := -std=gnu11
 
 CFLAGS += $(STD)
 
-.PHONY: clean lib all
+.PHONY: clean lib all test
 
 all: lib driver
 
@@ -69,6 +71,10 @@ lib_clean:
 
 driver_clean:
 	$(RM) -r $(DRIVER_BLDD) $(DRIVER_BIND)
+
+test: all $(ALL_TESTS)
+	for i in $(ALL_TESTS); do \
+		/bin/bash $$i; done
 
 .PRECIOUS: $(LIB_BLDD)/*.d $(DRIVER_BLDD)/*.d
 -include $(LIB_BLDD)/*.d $(DRIVER_BLDD)/*.d
