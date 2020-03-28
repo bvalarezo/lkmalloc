@@ -1,5 +1,6 @@
 #include "driver.h"
 
+/* This showcases double-malloc and memory leaks, as well as scaling with 1000 records */
 int main()
 {
     set_lkreport(STDOUT_FILENO, LKR_SERIOUS);

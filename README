@@ -1,4 +1,3 @@
-
 # LKMALLOC
 
 **Lkmalloc** is a debugging API that wraps around `malloc(3)` and `free(3)`. The goal of this library is to track all calls to `malloc(3)` and `free(3)` and describe any potential memory leaks, bugs, or invalid free's.
@@ -21,9 +20,9 @@ To compile only the static library, run...
 ```bash
 make lib
 ```
-This will create an archive '.a' file containing all of the library functions.  
+This will create an archive (.a) file containing all of the library's code.  
 
-To compile the static library and driver programs, run...
+To compile both the static library and driver programs, run...
 ```bash
 make all
 ```
@@ -48,7 +47,8 @@ The basic file tree looks like the one below. All files associated with  **lkmal
 	│   └── src
 	│       ├── driver1.c
 	│       ├── driver2.c
-	│       └── driver3.c
+	│	├── driver3.c
+	│       └── driver4.c
 	├── lib
 	│   ├── build
 	│   │   ├── *.d
@@ -99,7 +99,7 @@ Add an additional 8 bytes of memory at the end of the allocation and writes the 
 __LKM_UNDER__
 Add an additional 8 bytes of memory at the beginning of the allocation and writes the special pattern *0x6b*.
 
-__LKM_REG__ may not be combined with any other flag. If combined, __LKM_REG__ is ignored and __lkmalloc()__ will invoke the other flags combined.
+>__NOTE:__ __LKM_REG__ may not be combined with any other flag. If combined, __LKM_REG__ is ignored and __lkmalloc()__ will invoke the other flags combined.
 
 The __lkfree()__ function frees the memory space pointed to by **ptr*, which must have been written by a previous call to __lkmalloc()__.  It does so by making a call to __free()__, only if the **ptr* passed in is a valid allocated address in memory. The __lkfree()__ function will also log a record of the call and internally store relevant information; see __lkrecord__ for details. Additional behavior and protections are invoked based on the *flags* passed in. This will attempt to handle bad frees's, orphaned frees, double frees, and misaligned addresses of an allocated space.
 
@@ -120,7 +120,7 @@ Print a warning to `STDERR` if **ptr*  is an invalid address not allocated in me
 __LKF_ERROR__
 This will `exit(3)` the program if either conditions in __LKF_WARN__ or __LKF_UNKNOWN__ are met.
 
-__LKF_REG__  and __LKF_APPROX__ may not be combined with each other. If combined, __lkfree()__ will favor __LKF_APPROX__. It is recommended to combine __LKF_WARN__  with __LKF_APPROX__ in order to print the warning. Otherwise, __LKF_WARN__  will be ignored. 
+>__NOTE:__ __LKF_REG__  and __LKF_APPROX__ may not be combined with each other. If combined, __lkfree()__ will favor __LKF_APPROX__. It is recommended to combine __LKF_WARN__  with __LKF_APPROX__ in order to print the warning. Otherwise, __LKF_WARN__  will be ignored. 
 
 The __lkreport()__ function will dump a report of all of the records that were logged in __lkmalloc()__ and __lkfree()__.  The report will be written to the file referred to by the file descriptor *fd* and perform clean up operations on the internal data structures as well as free memory allocations that were leaked by the caller. The kind of reports that are dumped by __lkreport__() are defined by the *flags* passed in. 
 
@@ -147,7 +147,7 @@ Print records that attempt to free memory addresses were already freed by __lkfr
 **LKR_APPROX**  
 Print records whose memory address have a corresponding call to __lkmalloc()__ and __lkfree()__ and the address freed by __lkfree()__ was an approximated free (when __LKF_APPROX__ was passed in).
 
-__LKR_NONE__ may not be combined with any other flag. If combined, the __LKR_NONE__ flag is ignored and __lkreport()__ will invoke the other flags combined. **LKR_BAD_FREE**  and **LKR_APPROX** may not be combined with each other as it is a redundant request to print approxmiated frees and bad frees. If combined, __lkreport()__ will return an error code and not print a report.   
+>__NOTE:__ __LKR_NONE__ may not be combined with any other flag. If combined, the __LKR_NONE__ flag is ignored and __lkreport()__ will invoke the other flags combined.
 
 #### LKRECORD
 An lkrecord will record generic information such as..
@@ -178,9 +178,9 @@ __lkmalloc()__ and __lkfree()__ will return 0 on success. On error, a negative e
 __lkreport()__ will return the number of records printed on success. On error, a negative error status code is returned describing the type of error.
 
 ### ERRORS
-__lkmalloc()__, __lkfree()__, and __lkreport__ can fail with the following error:
+__lkmalloc()__, and __lkfree()__ can fail with the following error:
 
-__EINVAL__ Invalid values in *flags*
+__EINVAL__ Invalid arguments
 
 __lkmalloc()__ can fail with the following error:
 
@@ -192,16 +192,18 @@ __EBADF__ *fd* is not a valid file descriptor.
 
 __EACCES__ *fd* is not open for writing.
 
-If any of the internal recording functions face a fatal error, the API will print an error to `STDERR` and make a call to __exit(3)__ with an exit code the negative error status code.
+If any of the internal recording functions face a fatal error, the API will print an error to `STDERR` and make a call to __exit(3)__ with the exit code a negative error status code.
 ### NOTES
 
 The API will only record/log calls to __lkmalloc()__ and __lkfree()__ and nothing more. The API will not attempt to NULL pointers or correct address values passed in. Any record reported as an error must be addressed by the caller.
 
-__lkmalloc()__ and __lkfree()__ are wrappers around `malloc(3)` and `free(3)` and therefore should __NOT__ be mixed together in a program. Pointers returned by `malloc(3)`  and passed into __lkfree()__, or vice versa, will invoke unexpected behavior.
+__lkmalloc()__ and __lkfree()__ are wrappers around `malloc(3)` and `free(3)` and therefore should __NOT__ be mixed together in a program. Pointers returned by `malloc(3)`  and passed into __lkfree()__, or vice versa, will produce unexpected behavior.
 
-__lkreport()__ will dump all records as well as clean up the internal data structures. Rather than calling lkreport at different parts of the program, it is recommeded to use `atexit(3)` to register the function to be called on exit.  
+__lkreport()__ will dump all records at the current snapshot of the program. Calling __lkreport()__ at different parts of the program with different flags can lead to missing out on certain information(due to the function clearing out its internal data structures for record keeping). Rather than calling __lkreport()__ multiple times, it is recommeded to use `atexit(3)` to register the function to be called on exit.  
 
-A wrapper function can defined in order to achieve this(See driver.h). It is best to set up this wrapper function and call at the beginning of the program. This way, the API will also dump a report and properly clean up memory desipte the exit condition.
+A wrapper function can defined in order to achieve this (see `driver.h`). It is best to set up theses wrapper  functions within the user's program. Then user can then call these wrappers at the beginning of the program to register __lkreport()__ as an exit function.  This way, the API will always dump an accurate report and properly clean up memory despite the exit condition.
+
+>Note: If a signal (like SIGSEGV) is sent to the program, functions registered with `atexit(3)` will not be called.
 
 Here is an example of the wrapper functions:
 ```C
@@ -216,29 +218,29 @@ void lkreport_atexit()
 }
 
 /* setter to init the variables for lkreport and call it with atexit(3) */
-void set_lkreport(int  fd, unsigned  int  flags)
+void set_lkreport(int fd, unsigned int flags)
 {
 	lkreport_fd = fd;
 	lkreport_flags = flags;
 	atexit(lkreport_atexit);
 }
 ```
-Finally, the wrapper can be called in the beginning of the program...
+Finally, the wrapper can be called in the beginning of the user program...
 ```C
 int main(){
-	//fd = open file
-	set_lkreport(<file descriptor>,<lkreport flags>);
+	int my_fd = open(<my file>);
+	set_lkreport(my_fd, <lkreport flags>);
 	...
 ```
 
-The records printed out by __lkreport()__ will be in a .csv format(comma seperated value) and can be opened with other csv programs. Records are ordered based on how they are arranged in the internal data structures. If you wish to sort them, please dump the records in a .csv and open in a editor/viewer program.(Microsoft Excel, Google Sheets, etc).
+The records printed out by __lkreport()__ will be in a .csv format(comma seperated value) and can be opened with other csv programs. Records are ordered based on how they are arranged in the internal data structures. If you wish to sort them, please open the .csv report in a editor/viewer program (Microsoft Excel, Google Sheets, etc).
 ## Basic information & Implementation
 This library wraps around `malloc(3)` and `free(3)` and make subsequent calls to those functions on behalf of the caller. The library also allocates memory for its internal data structure. The  records are defined in a 	`struct` that is packed in other `structs`(see record.h).
 
 ```C
 /* lkrecord */
 
-struct  generic
+struct generic
 {
 	unsigned  int record_type : 1;
 	const  char *file_name;
@@ -272,8 +274,6 @@ struct  lkrecord_data
 		struct  free_extension  free_info;
 	};
 };
-
-  
 
 struct  lkrecord
 {

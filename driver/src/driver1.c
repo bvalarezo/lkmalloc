@@ -14,6 +14,7 @@ void foo(void *b, void *r, void *y, void *a, void *n)
     bar(y, a, n);
 }
 
+/* This showcases valid malloc and free pairs due to MATCH or APPROX */
 int main()
 {
     set_lkreport(STDOUT_FILENO, LKR_MATCH | LKR_APPROX);
